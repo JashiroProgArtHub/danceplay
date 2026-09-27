@@ -68,9 +68,9 @@ function mapDance(data: any): Dance {
   }
 }
 
-export const getDances = async (): Promise<Dance[]> => {
-  const response = await api.get<any[]>('/dances')
-  return response.data.map(mapDance)
+export const getDances = async (params: Record<string, any> = {}) => {
+  const response = await api.get('/dances', { params })
+  return response.data // Returns { data: [...], current_page, last_page }
 }
 
 export const createDance = async (dance: Partial<Dance> & { coverFile?: File | null }): Promise<Dance> => {

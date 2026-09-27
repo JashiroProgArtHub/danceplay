@@ -9,9 +9,28 @@ use Illuminate\Support\Facades\Storage;
 
 class DanceController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request)
     {
-        return response()->json(Dance::all());
+        $query = Dance::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('artist', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('category') && $request->category !== 'All') {
+            $query->where('category', $request->category);
+        }
+
+        if ($request->filled('status') && $request->status !== 'All') {
+            $query->where('status', $request->status);
+        }
+
+        return response()->json($query->paginate(12));
     }
 
     public function store(Request $request)

@@ -215,8 +215,37 @@
         <div class="toolbar">
           <label class="search-box">
             <span>⌕</span>
-            <input v-model="searchQuery" type="search" placeholder="Search dances, artists, or categories...">
+            <input
+              v-model="searchQuery"
+              type="search"
+              placeholder="Search dances, artists, or categories..."
+              @update:model-value="loadDances(1, false)"
+              @input="loadDances(1, false)"
+            >
           </label>
+          <div class="filter-dropdowns">
+            <select
+              v-model="categoryFilter"
+              class="filter-dropdown"
+              aria-label="Filter by category"
+              @update:model-value="loadDances(1, false)"
+              @change="loadDances(1, false)"
+            >
+              <option value="All">All Categories</option>
+              <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+            </select>
+            <select
+              v-if="activeView !== 'discover'"
+              v-model="statusFilter"
+              class="filter-dropdown status-select"
+              aria-label="Filter by status"
+              @update:model-value="loadDances(1, false)"
+              @change="loadDances(1, false)"
+            >
+              <option value="All">All Statuses</option>
+              <option v-for="filter in filters.filter(f => f !== 'All')" :key="filter" :value="filter">{{ filter }}</option>
+            </select>
+          </div>
           <div v-if="activeView !== 'discover'" class="filters">
             <button v-for="filter in filters" :key="filter" :class="{ selected: statusFilter === filter }" @click="setStatusFilter(filter)">{{ filter }}</button>
           </div>
@@ -240,31 +269,44 @@
           <button class="primary-btn" @click="loadDances">Retry</button>
         </div>
 
-        <div class="dance-grid" v-else-if="filteredDances.length">
-          <article class="dance-card" v-for="dance in filteredDances" :key="dance.id" @click="openDance(dance)">
-            <div class="card-image">
-              <img :src="coverForDance(dance)" :alt="dance.title" @error="handleImageError($event, dance)">
-              <span v-if="activeView === 'discover' && isOwned(dance)" class="status-pill status-owned">IN MY DANCES</span>
-              <span v-else-if="dance.status === 'Want to Learn'" class="status-pill status-want">WANT TO LEARN</span>
-              <span v-else-if="dance.status === 'Learning'" class="status-pill status-learning">LEARNING</span>
-              <span v-else-if="dance.status === 'Ready to Film'" class="status-pill status-ready">READY TO FILM</span>
-              <span v-else class="uploaded-badge">✓ UPLOADED</span>
-              <button v-if="activeView !== 'discover' || isOwned(dance)" class="favorite-btn" :class="{ liked: isFavorite(dance), 'favorite-pulse': favoritePulseId === dance.id }" @click.stop="toggleFavorite(dance)">♥</button>
-            </div>
-            <div class="card-body">
-              <div class="card-title-row"><h3>{{ dance.title }}</h3><span class="category-dot"></span></div>
-              <p>{{ dance.artist }}</p>
-              <div class="progress-line" v-if="activeView !== 'discover' && dance.status !== 'Uploaded'"><span :style="{ width: dance.progress + '%' }"></span></div>
-              <div class="card-meta">
-                <span v-if="activeView === 'discover'">{{ isOwned(dance) ? 'In My Dances' : 'Discover dance' }}</span>
-                <span v-else>{{ dance.status === 'Uploaded' ? 'Uploaded' : dance.progress + '% learned' }}</span>
-                <span>{{ dance.category }}</span>
+        <q-infinite-scroll
+          v-else-if="dances.length"
+          ref="infiniteScroll"
+          @load="onLoad"
+          :offset="250"
+          :disable="currentPage >= lastPage"
+        >
+          <div class="dance-grid">
+            <article class="dance-card" v-for="dance in dances" :key="dance.id" @click="openDance(dance)">
+              <div class="card-image">
+                <img :src="coverForDance(dance)" :alt="dance.title" @error="handleImageError($event, dance)">
+                <span v-if="activeView === 'discover' && isOwned(dance)" class="status-pill status-owned">IN MY DANCES</span>
+                <span v-else-if="dance.status === 'Want to Learn'" class="status-pill status-want">WANT TO LEARN</span>
+                <span v-else-if="dance.status === 'Learning'" class="status-pill status-learning">LEARNING</span>
+                <span v-else-if="dance.status === 'Ready to Film'" class="status-pill status-ready">READY TO FILM</span>
+                <span v-else class="uploaded-badge">✓ UPLOADED</span>
+                <button v-if="activeView !== 'discover' || isOwned(dance)" class="favorite-btn" :class="{ liked: isFavorite(dance), 'favorite-pulse': favoritePulseId === dance.id }" @click.stop="toggleFavorite(dance)">♥</button>
               </div>
-              <button v-if="activeView === 'discover' && !isOwned(dance)" class="secondary-btn" @click.stop="addToMyDances(dance)">Add to My Dances</button>
-              <button v-else-if="activeView === 'discover'" class="secondary-btn" @click.stop="openDance(dance)">View My Dance</button>
+              <div class="card-body">
+                <div class="card-title-row"><h3>{{ dance.title }}</h3><span class="category-dot"></span></div>
+                <p>{{ dance.artist }}</p>
+                <div class="progress-line" v-if="activeView !== 'discover' && dance.status !== 'Uploaded'"><span :style="{ width: dance.progress + '%' }"></span></div>
+                <div class="card-meta">
+                  <span v-if="activeView === 'discover'">{{ isOwned(dance) ? 'In My Dances' : 'Discover dance' }}</span>
+                  <span v-else>{{ dance.status === 'Uploaded' ? 'Uploaded' : dance.progress + '% learned' }}</span>
+                  <span>{{ dance.category }}</span>
+                </div>
+                <button v-if="activeView === 'discover' && !isOwned(dance)" class="secondary-btn" @click.stop="addToMyDances(dance)">Add to My Dances</button>
+                <button v-else-if="activeView === 'discover'" class="secondary-btn" @click.stop="openDance(dance)">View My Dance</button>
+              </div>
+            </article>
+          </div>
+          <template v-slot:loading>
+            <div class="row justify-center q-my-md">
+              <q-spinner-dots color="primary" size="40px" />
             </div>
-          </article>
-        </div>
+          </template>
+        </q-infinite-scroll>
 
         <div class="empty-state" v-else>
           <div class="empty-icon">✦</div>
@@ -501,8 +543,15 @@ export default defineComponent({
         { id: 't4', title: 'Like JENNIE', artist: 'JENNIE', category: 'Dance Cover', difficulty: 'Medium', rank: 4, coverImage: '' },
         { id: 't5', title: 'Touch', artist: 'KATSEYE', category: 'TikTok', difficulty: 'Easy', rank: 5, coverImage: '' }
       ] as Dance[],
+      currentPage: 1,
+      lastPage: 1,
       searchQuery: '',
+      search: '',
+      categoryFilter: 'All',
+      category: 'All',
       statusFilter: 'All',
+      status: 'All',
+      categories: ['K-Pop', 'TikTok', 'Dance Cover', 'Hip-Hop', 'Choreography', 'Freestyle', 'Other'],
       filters: ['All', 'Want to Learn', 'Learning', 'Ready to Film', 'Uploaded'],
       showForm: false,
       editingDance: null as Dance | null,
@@ -528,10 +577,7 @@ export default defineComponent({
     learningDances(): Dance[] { return this.dances.filter(d => d.status === 'Learning') },
     uploadedDances(): Dance[] { return this.dances.filter(d => d.status === 'Uploaded') },
     discoverableDances(): Dance[] {
-      return this.trendingDances.map(dance => {
-        const seed = DEFAULT_DANCES.find(item => item.title === dance.title && item.artist === dance.artist)
-        return seed ? { ...seed, rank: dance.rank } : dance
-      })
+      return this.dances
     },
     selectedDanceIsOwned(): boolean {
       return Boolean(this.selectedDance && this.dances.some(d => d.id === this.selectedDance!.id))
@@ -551,15 +597,7 @@ export default defineComponent({
     },
     favoriteDances(): Dance[] { return this.dances.filter(d => d.favorite) },
     filteredDances(): Dance[] {
-      let list: Dance[] = this.activeView === 'discover'
-        ? [...this.discoverableDances]
-        : this.activeView === 'favorites'
-          ? this.favoriteDances
-          : [...this.dances]
-      if (this.activeView !== 'discover' && this.statusFilter !== 'All') list = list.filter(d => d.status === this.statusFilter)
-      const query = this.searchQuery.toLowerCase().trim()
-      if (query) list = list.filter(d => d.title.toLowerCase().includes(query) || d.artist.toLowerCase().includes(query) || d.category.toLowerCase().includes(query))
-      return list
+      return this.dances
     }
   },
 
@@ -581,12 +619,14 @@ export default defineComponent({
     },
     setStatusFilter(filter: string) {
       this.statusFilter = filter
+      this.status = filter
       this.activeView = 'dances'
       this.mobileMenuOpen = false
       void router.push({
         path: '/dances',
         query: filter === 'All' ? {} : { status: this.statusSlug(filter) }
       })
+      this.loadDances(1, false)
     },
     statusSlug(filter: string): string {
       return filter.toLowerCase().replace(/\s+/g, '-')
@@ -812,12 +852,34 @@ export default defineComponent({
       if (target.src.endsWith(fallback)) return
       target.src = fallback
     },
-    async loadDances() {
-      this.isInitialLoading = true
+    async loadDances(page = 1, append = false) {
+      if (!append) {
+        this.isInitialLoading = true
+      }
       this.loadError = ''
       try {
-        const data = await getDances()
-        this.dances = Array.isArray(data) ? data.map(dance => this.normalizeDance(dance)) : []
+        const searchVal = (this.search || this.searchQuery || '').trim()
+        const categoryVal = this.category !== 'All' && this.category ? this.category : (this.categoryFilter !== 'All' ? this.categoryFilter : '')
+        const statusVal = this.status !== 'All' && this.status ? this.status : (this.statusFilter !== 'All' ? this.statusFilter : '')
+
+        const params: Record<string, any> = { page }
+        if (searchVal) params.search = searchVal
+        if (categoryVal && categoryVal !== 'All') params.category = categoryVal
+        if (statusVal && statusVal !== 'All') params.status = statusVal
+
+        const response = await getDances(params)
+        const items = response?.data ? response.data : (Array.isArray(response) ? response : [])
+        const normalized = items.map((dance: any) => this.normalizeDance(dance))
+
+        if (append) {
+          this.dances.push(...normalized)
+        } else {
+          this.dances = normalized
+        }
+
+        this.currentPage = response?.current_page ?? page
+        this.lastPage = response?.last_page ?? 1
+
         const danceId = this.$route.params.id
         if (danceId) {
           const dance = this.dances.find(item => String(item.id) === String(danceId))
@@ -834,7 +896,24 @@ export default defineComponent({
         })
         console.error('Load dances failed:', error)
       } finally {
-        this.isInitialLoading = false
+        if (!append) {
+          this.isInitialLoading = false
+        }
+      }
+    },
+    async onLoad(index: number, done: (stop?: boolean) => void) {
+      if (this.currentPage >= this.lastPage) {
+        if (typeof done === 'function') done(true)
+        return
+      }
+      this.currentPage++
+      await this.loadDances(this.currentPage, true)
+      if (typeof done === 'function') {
+        if (this.currentPage >= this.lastPage) {
+          done(true)
+        } else {
+          done()
+        }
       }
     },
     normalizeDance(dance: Partial<Dance>): Dance {
@@ -900,7 +979,11 @@ export default defineComponent({
       this.activeView = path.startsWith('/dances') ? 'dances' : path === '/discover' || path === '/favorites' ? path.slice(1) : 'home'
     },
     '$route.query.status'(status: unknown) {
-      if (this.activeView === 'dances') this.statusFilter = this.statusFromSlug(status)
+      if (this.activeView === 'dances') {
+        this.statusFilter = this.statusFromSlug(status)
+        this.status = this.statusFilter
+        this.loadDances(1, false)
+      }
     },
     showForm(value: boolean) { document.body.style.overflow = value || Boolean(this.deleteTarget) || Boolean(this.selectedDance) ? 'hidden' : '' },
     selectedDance(value: Dance | null) { document.body.style.overflow = value || this.showForm || this.deleteTarget ? 'hidden' : '' },
@@ -911,6 +994,24 @@ export default defineComponent({
 
 <style scoped>
 /* Component-specific Activity 2 styles. The shared DancePlay visual system lives in src/css/app.scss. */
+.filter-dropdowns {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.filter-dropdown {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+}
+.filter-dropdown:focus {
+  border-color: rgba(184, 108, 255, 0.5);
+}
 .api-demo-card {
   background: var(--panel);
   border: 1px solid var(--border);

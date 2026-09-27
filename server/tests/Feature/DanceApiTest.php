@@ -17,7 +17,7 @@ class DanceApiTest extends TestCase
         $response = $this->getJson('/api/dances');
 
         $response->assertStatus(200)
-                 ->assertJsonCount(1)
+                 ->assertJsonStructure(['data', 'current_page', 'last_page'])
                  ->assertJsonFragment(['title' => 'Test Dance']);
     }
 
