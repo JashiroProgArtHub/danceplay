@@ -3,7 +3,7 @@
 DancePlay is a dance-learning and tracking application organized as a two-workspace monorepo:
 
 - `client/` — Vue 3, Quasar, TypeScript, Vite, Pinia, and Axios frontend.
-- `server/` — lightweight Laravel patch containing the custom API route and controller. It is currently an **unhydrated Laravel patch**, not a complete Laravel installation.
+- `server/` — Standard Laravel 12 API backend.
 
 ## 1. Architecture
 
@@ -12,10 +12,10 @@ Quasar client
     |
     | Axios requests through /api proxy
     v
-Laravel runtime generated locally from server/ patch
+Laravel 12 API backend
     |
     v
-MySQL and Laravel storage
+MySQL database via XAMPP and Laravel storage
 ```
 
 The client provides the navigation shell, dashboard, discover view, favorites, dance collection, progress tracking, cover-art fallbacks, add/edit/delete flows, and backend connectivity check.
@@ -25,13 +25,11 @@ The client provides the navigation shell, dashboard, discover view, favorites, d
 ```text
 .
 ├── client/              # Quasar/Vue application
-├── server/              # Laravel patch files
+├── server/              # Standard Laravel 12 API backend
 ├── setup-backend.ps1    # Windows backend preparation workflow
 ├── .gitignore
 └── README.md
 ```
-
-The committed `server/` directory intentionally excludes Laravel framework boilerplate and Composer's `vendor/` directory. Use the setup workflow to hydrate a runnable Laravel installation locally.
 
 ## 3. Prerequisites
 
@@ -41,20 +39,20 @@ Install the following before setup:
 - Node.js and npm
 - PHP 8.2 or newer
 - Composer
-- MySQL, or another database configured in the generated Laravel application's `.env`
+- MySQL (via XAMPP), or another database configured in `server/.env`
 - PowerShell when using `setup-backend.ps1`
 
 ## 4. Backend setup
 
-From the repository root, run the preparation script:
+1. Run `setup-backend.ps1` from the repository root to install Composer dependencies, generate the app key, and link storage:
 
 ```powershell
 .\setup-backend.ps1
 ```
 
-The script temporarily moves the patch, creates a Composer-generated Laravel application, and copies the custom route and controller into it. Review the script output and configure the generated Laravel application's `.env` using `server/.env.example` as the reference.
+2. Ensure MySQL is running on port 3306 (e.g. via XAMPP Control Panel).
 
-The expected local database values are:
+3. Configure `server/.env` with database credentials:
 
 ```dotenv
 DB_CONNECTION=mysql
@@ -65,16 +63,18 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-After the Laravel runtime is available:
+4. Run `php artisan migrate:fresh --seed` to build the database and populate default dances:
 
 ```powershell
 cd server
-php artisan key:generate
-php artisan migrate
-php artisan serve
+php artisan migrate:fresh --seed
 ```
 
-If the generated Laravel project is kept under a temporary directory, run the Artisan commands from that directory instead.
+5. Run `php artisan serve`:
+
+```powershell
+php artisan serve
+```
 
 ## 5. Frontend setup and scripts
 
@@ -117,7 +117,7 @@ Open the URL printed by Quasar. Use the **Test Backend** action on the home view
 
 ### Implemented handshake
 
-The current Laravel patch implements:
+The Laravel backend implements:
 
 ```text
 GET /api/hello
@@ -135,7 +135,7 @@ The endpoint is implemented by `server/routes/api.php` and `server/app/Http/Cont
 
 ### Expected dance contracts
 
-The client service layer is prepared for the following endpoints, but the current committed server patch does not yet implement them:
+The client service layer is prepared for the following endpoints, and the server fully implements the following standard CRUD endpoints:
 
 ```text
 GET    /api/dances
@@ -160,10 +160,10 @@ The client uses:
 
 - `client/public/*.jpg` for seeded cover artwork.
 - `client/public/default-cover-*.svg` for deterministic fallback artwork.
-- Multipart `cover_image` payloads for future server-backed uploads.
+- Multipart `cover_image` payloads for server-backed uploads.
 - `/storage/` paths and remote HTTP(S) URLs when supplied by an API response.
 
-No database migrations, Eloquent models, or upload controller are currently committed in `server/`. Those belong to the future dance CRUD and media-storage milestone.
+Database migrations and Eloquent models for Dance CRUD are fully implemented.
 
 Never commit private `.env` files, `node_modules/`, Composer `vendor/`, build output, Laravel caches, or logs.
 
@@ -177,9 +177,10 @@ npm run lint
 npm run build
 ```
 
-When a hydrated Laravel application is available, also run its test suite:
+Run the backend test suite:
 
 ```powershell
+cd server
 php artisan test
 ```
 
