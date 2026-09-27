@@ -442,7 +442,7 @@ interface Dance {
   sourceLink: string
   uploadLink: string
   notes: string
-  coverFile: File | null
+  coverFile?: File | null
   rank?: number
 }
 
@@ -457,6 +457,7 @@ interface FormState {
   uploadLink: string
   favorite: boolean
   notes: string
+  coverFile?: File | null
 }
 
 interface Toast {
@@ -468,14 +469,14 @@ interface Toast {
 const DEFAULT_COVERS = Array.from({ length: 9 }, (_, index) => `/default-cover-${index + 1}.svg`)
 
 const DEFAULT_DANCES: Dance[] = [
-  { id: 1, title: 'Magnetic', artist: 'ILLIT', category: 'K-Pop', difficulty: 'Medium', status: 'Learning', progress: 65, favorite: true, coverImage: 'images/illit.jpg', sourceLink: 'https://www.youtube.com/results?search_query=ILLIT+Magnetic+dance+tutorial', uploadLink: '', notes: 'Practice the second chorus and clean up the hand movements.' },
-  { id: 2, title: 'Espresso', artist: 'Sabrina Carpenter', category: 'TikTok', difficulty: 'Medium', status: 'Learning', progress: 40, favorite: false, coverImage: 'images/sabrinacarpenter.jpg', sourceLink: 'https://www.youtube.com/results?search_query=Espresso+dance+tutorial', uploadLink: '', notes: 'Work on timing and transitions.' },
-  { id: 3, title: 'Supernova', artist: 'aespa', category: 'K-Pop', difficulty: 'Hard', status: 'Ready to Film', progress: 90, favorite: true, coverImage: 'images/aespa.jpg', sourceLink: 'https://www.youtube.com/results?search_query=aespa+Supernova+dance+tutorial', uploadLink: '', notes: 'Film a full take after one more practice.' },
-  { id: 4, title: 'Drama', artist: 'aespa', category: 'K-Pop', difficulty: 'Hard', status: 'Learning', progress: 30, favorite: false, coverImage: 'images/aespadrama.jpg', sourceLink: 'https://www.youtube.com/results?search_query=aespa+Drama+dance+tutorial', uploadLink: '', notes: 'Still learning the chorus.' },
-  { id: 5, title: 'Smart', artist: 'LE SSERAFIM', category: 'K-Pop', difficulty: 'Medium', status: 'Want to Learn', progress: 0, favorite: false, coverImage: 'images/lesserafim.jpg', sourceLink: 'https://www.youtube.com/results?search_query=LE+SSERAFIM+Smart+dance+tutorial', uploadLink: '', notes: '' },
-  { id: 6, title: 'Like JENNIE', artist: 'JENNIE', category: 'Dance Cover', difficulty: 'Medium', status: 'Uploaded', progress: 100, favorite: true, coverImage: 'images/likejennie.jpg', sourceLink: 'https://www.youtube.com/results?search_query=Like+JENNIE+dance+tutorial', uploadLink: 'https://www.youtube.com/', notes: 'Uploaded my first full cover.' },
-  { id: 7, title: 'Touch', artist: 'KATSEYE', category: 'TikTok', difficulty: 'Easy', status: 'Uploaded', progress: 100, favorite: false, coverImage: 'images/katseye.jpg', sourceLink: 'https://www.youtube.com/results?search_query=KATSEYE+Touch+dance+tutorial', uploadLink: 'https://www.youtube.com/', notes: 'Short-form version uploaded.' },
-  { id: 8, title: 'How Sweet', artist: 'NewJeans', category: 'K-Pop', difficulty: 'Medium', status: 'Want to Learn', progress: 0, favorite: false, coverImage: 'images/newjeans.jpg', sourceLink: 'https://www.youtube.com/results?search_query=NewJeans+How+Sweet+dance+tutorial', uploadLink: '', notes: '' }
+  { id: 1, title: 'Magnetic', artist: 'ILLIT', category: 'K-Pop', difficulty: 'Medium', status: 'Learning', progress: 65, favorite: true, coverImage: '/illit.jpg', sourceLink: 'https://www.youtube.com/results?search_query=ILLIT+Magnetic+dance+tutorial', uploadLink: '', notes: 'Practice the second chorus and clean up the hand movements.' },
+  { id: 2, title: 'Espresso', artist: 'Sabrina Carpenter', category: 'TikTok', difficulty: 'Medium', status: 'Learning', progress: 40, favorite: false, coverImage: '/sabrinacarpenter.jpg', sourceLink: 'https://www.youtube.com/results?search_query=Espresso+dance+tutorial', uploadLink: '', notes: 'Work on timing and transitions.' },
+  { id: 3, title: 'Supernova', artist: 'aespa', category: 'K-Pop', difficulty: 'Hard', status: 'Ready to Film', progress: 90, favorite: true, coverImage: '/aespa.jpg', sourceLink: 'https://www.youtube.com/results?search_query=aespa+Supernova+dance+tutorial', uploadLink: '', notes: 'Film a full take after one more practice.' },
+  { id: 4, title: 'Drama', artist: 'aespa', category: 'K-Pop', difficulty: 'Hard', status: 'Learning', progress: 30, favorite: false, coverImage: '/aespadrama.jpg', sourceLink: 'https://www.youtube.com/results?search_query=aespa+Drama+dance+tutorial', uploadLink: '', notes: 'Still learning the chorus.' },
+  { id: 5, title: 'Smart', artist: 'LE SSERAFIM', category: 'K-Pop', difficulty: 'Medium', status: 'Want to Learn', progress: 0, favorite: false, coverImage: '/lesserafim.jpg', sourceLink: 'https://www.youtube.com/results?search_query=LE+SSERAFIM+Smart+dance+tutorial', uploadLink: '', notes: '' },
+  { id: 6, title: 'Like JENNIE', artist: 'JENNIE', category: 'Dance Cover', difficulty: 'Medium', status: 'Uploaded', progress: 100, favorite: true, coverImage: '/likejennie.jpg', sourceLink: 'https://www.youtube.com/results?search_query=Like+JENNIE+dance+tutorial', uploadLink: 'https://www.youtube.com/', notes: 'Uploaded my first full cover.' },
+  { id: 7, title: 'Touch', artist: 'KATSEYE', category: 'TikTok', difficulty: 'Easy', status: 'Uploaded', progress: 100, favorite: false, coverImage: '/katseye.jpg', sourceLink: 'https://www.youtube.com/results?search_query=KATSEYE+Touch+dance+tutorial', uploadLink: 'https://www.youtube.com/', notes: 'Short-form version uploaded.' },
+  { id: 8, title: 'How Sweet', artist: 'NewJeans', category: 'K-Pop', difficulty: 'Medium', status: 'Want to Learn', progress: 0, favorite: false, coverImage: '/newjeans.jpg', sourceLink: 'https://www.youtube.com/results?search_query=NewJeans+How+Sweet+dance+tutorial', uploadLink: '', notes: '' }
 ]
 
 const createEmptyForm = (): FormState => ({
@@ -668,6 +669,13 @@ export default defineComponent({
         } else this.dances.unshift(this.normalizeDance(saved))
         this.showToast(this.editingDance ? 'Changes saved' : 'Dance added to collection')
         this.closeForm()
+      } catch (error) {
+        this.$q.notify({
+          type: 'negative',
+          message: 'Failed to save dance. Please check your connection.',
+          position: 'top'
+        })
+        console.error('Save failed:', error)
       } finally {
         this.mutationLoading = false
       }
@@ -675,12 +683,21 @@ export default defineComponent({
     async addToMyDances(dance: Dance) {
       const existing = this.findOwnedDance(dance)
       if (existing) { this.selectedDance = existing; return existing }
-      const saved = await createDanceApi({ title: dance.title, artist: dance.artist, category: dance.category, difficulty: dance.difficulty, status: 'Want to Learn', progress: 0, favorite: false, sourceLink: dance.sourceLink, notes: dance.notes })
-      if (dance.coverImage) saved.coverImage = dance.coverImage
-      this.dances.unshift(saved)
-      this.selectedDance = saved
-      this.showToast('Dance added to collection')
-      return saved
+      try {
+        const saved = await createDanceApi({ title: dance.title, artist: dance.artist, category: dance.category, difficulty: dance.difficulty, status: 'Want to Learn', progress: 0, favorite: false, sourceLink: dance.sourceLink, notes: dance.notes })
+        if (dance.coverImage) saved.coverImage = dance.coverImage
+        this.dances.unshift(saved)
+        this.selectedDance = saved
+        this.showToast('Dance added to collection')
+        return saved
+      } catch (error) {
+        this.$q.notify({
+          type: 'negative',
+          message: 'Failed to add dance to collection. Please check your connection.',
+          position: 'top'
+        })
+        console.error('Add to my dances failed:', error)
+      }
     },
     requestDelete(dance: Dance) {
       this.deleteTarget = dance
@@ -694,10 +711,17 @@ export default defineComponent({
       const dance = this.deleteTarget
       try {
         await deleteDanceApi(Number(dance.id))
-      this.dances = this.dances.filter(d => d.id !== dance.id)
-      if (this.selectedDance && this.selectedDance.id === dance.id) this.selectedDance = null
+        this.dances = this.dances.filter(d => d.id !== dance.id)
+        if (this.selectedDance && this.selectedDance.id === dance.id) this.selectedDance = null
         this.deleteTarget = null
-      this.showToast('Dance permanently removed')
+        this.showToast('Dance permanently removed')
+      } catch (error) {
+        this.$q.notify({
+          type: 'negative',
+          message: 'Failed to delete dance. Please check your connection.',
+          position: 'top'
+        })
+        console.error('Delete failed:', error)
       } finally {
         this.mutationLoading = false
       }
@@ -710,8 +734,18 @@ export default defineComponent({
       window.setTimeout(() => {
         if (this.favoritePulseId === owned.id) this.favoritePulseId = null
       }, 220)
-      await updateDanceApi(Number(owned.id), { favorite: owned.favorite })
-      this.showToast(owned.favorite ? 'Added to favorites' : 'Removed from favorites')
+      try {
+        await updateDanceApi(Number(owned.id), { favorite: owned.favorite })
+        this.showToast(owned.favorite ? 'Added to favorites' : 'Removed from favorites')
+      } catch (error) {
+        owned.favorite = !owned.favorite
+        this.$q.notify({
+          type: 'negative',
+          message: 'Failed to update favorite status. Please check your connection.',
+          position: 'top'
+        })
+        console.error('Toggle favorite failed:', error)
+      }
     },
     async updateProgress(dance: Dance, amount: number) {
       dance.progress = Math.min(100, Math.max(0, dance.progress + amount))
@@ -763,8 +797,8 @@ export default defineComponent({
       return DEFAULT_COVERS[hash % DEFAULT_COVERS.length]
     },
     isUsableCover(cover: string): boolean {
+      if (cover.startsWith('/')) return true
       if (cover.startsWith('blob:') || cover.startsWith('data:image/')) return true
-      if (cover.startsWith('/storage/') || cover.startsWith('/images/')) return true
       try {
         const url = new URL(cover)
         return url.protocol === 'http:' || url.protocol === 'https:'
@@ -782,7 +816,8 @@ export default defineComponent({
       this.isInitialLoading = true
       this.loadError = ''
       try {
-        this.dances = (await getDances()).map(dance => this.normalizeDance(dance))
+        const data = await getDances()
+        this.dances = Array.isArray(data) ? data.map(dance => this.normalizeDance(dance)) : []
         const danceId = this.$route.params.id
         if (danceId) {
           const dance = this.dances.find(item => String(item.id) === String(danceId))
@@ -792,6 +827,12 @@ export default defineComponent({
         this.loadError = axios.isAxiosError(error) && error.response
           ? `The backend returned ${error.response.status}.`
           : 'Could not connect to the Laravel backend. Please try again.'
+        this.$q.notify({
+          type: 'negative',
+          message: 'Could not connect to the backend server. Please make sure the backend is running.',
+          position: 'top'
+        })
+        console.error('Load dances failed:', error)
       } finally {
         this.isInitialLoading = false
       }
