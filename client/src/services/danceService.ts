@@ -13,18 +13,18 @@ export interface Dance {
   status: string
   progress: number
   favorite: boolean
-  coverImage?: string
-  cover_image?: string
-  sourceLink?: string
-  source_link?: string
-  uploadLink?: string
-  upload_link?: string
-  notes?: string
-  createdAt?: string
-  created_at?: string
-  updatedAt?: string
-  updated_at?: string
-  rank?: number
+  coverImage?: string | undefined
+  cover_image?: string | undefined
+  sourceLink?: string | undefined
+  source_link?: string | undefined
+  uploadLink?: string | undefined
+  upload_link?: string | undefined
+  notes?: string | undefined
+  createdAt?: string | undefined
+  created_at?: string | undefined
+  updatedAt?: string | undefined
+  updated_at?: string | undefined
+  rank?: number | undefined
 }
 
 export interface DanceData {

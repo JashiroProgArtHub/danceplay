@@ -63,7 +63,7 @@
             <h1>Dashboard unavailable.</h1>
             <p class="hero-copy">{{ loadError }}</p>
             <div class="hero-actions">
-              <button class="primary-btn" @click="loadDances">Retry</button>
+              <button class="primary-btn" @click="loadDances(1)">Retry</button>
             </div>
           </div>
         </section>
@@ -266,7 +266,7 @@
           <div class="empty-icon">!</div>
           <h2>Unable to load dances</h2>
           <p>{{ loadError }}</p>
-          <button class="primary-btn" @click="loadDances">Retry</button>
+          <button class="primary-btn" @click="loadDances(1)">Retry</button>
         </div>
 
         <q-infinite-scroll
@@ -469,24 +469,7 @@
 import { defineComponent } from 'vue'
 import axios from 'axios'
 import router from '../router'
-import { createDance as createDanceApi, deleteDance as deleteDanceApi, getDances, updateDance as updateDanceApi } from '../services/danceService'
-
-interface Dance {
-  id: number | string
-  title: string
-  artist: string
-  category: string
-  difficulty: string
-  status: string
-  progress: number
-  favorite: boolean
-  coverImage: string
-  sourceLink: string
-  uploadLink: string
-  notes: string
-  coverFile?: File | null
-  rank?: number
-}
+import { createDance as createDanceApi, deleteDance as deleteDanceApi, getDances, updateDance as updateDanceApi, type Dance } from '../services/danceService'
 
 interface FormState {
   title: string
@@ -494,12 +477,12 @@ interface FormState {
   category: string
   difficulty: string
   progress: number
-  coverImage: string
-  sourceLink: string
-  uploadLink: string
+  coverImage?: string | undefined
+  sourceLink?: string | undefined
+  uploadLink?: string | undefined
   favorite: boolean
-  notes: string
-  coverFile?: File | null
+  notes?: string | undefined
+  coverFile?: File | null | undefined
 }
 
 interface Toast {
@@ -559,7 +542,7 @@ export default defineComponent({
       deleteTarget: null as Dance | null,
       mutationLoading: false,
       favoritePulseId: null as number | string | null,
-      defaultCover: DEFAULT_COVERS[0],
+      defaultCover: (DEFAULT_COVERS[0] ?? '/default-cover-1.svg') as string,
       form: createEmptyForm(),
       backendMessage: '',
       backendError: '',
@@ -692,12 +675,16 @@ export default defineComponent({
       const hasUploadLink = Boolean(this.form.uploadLink && this.form.uploadLink.trim())
       const cleanProgress = Math.min(100, Math.max(0, Number(this.form.progress) || 0))
       const coverImageChanged = !this.editingDance || this.form.coverImage !== this.editingDance.coverImage
-      const data = {
+      const data: any = {
         ...this.form,
-        coverImage: coverImageChanged ? this.form.coverImage : undefined,
-        status: this.deriveStatus(cleanProgress, this.form.uploadLink),
+        status: this.deriveStatus(cleanProgress, this.form.uploadLink || ''),
         progress: hasUploadLink ? 100 : cleanProgress,
         favorite: this.editingDance ? this.editingDance.favorite : false
+      }
+      if (coverImageChanged && this.form.coverImage) {
+        data.coverImage = this.form.coverImage
+      } else if (!coverImageChanged) {
+        delete data.coverImage
       }
       try {
         const saved = this.editingDance
@@ -810,7 +797,7 @@ export default defineComponent({
       if (hasUploadLink) dance.progress = 100
       dance.status = this.deriveStatus(dance.progress, dance.uploadLink)
     },
-    deriveStatus(progress: number, uploadLink: string): string {
+    deriveStatus(progress: number, uploadLink?: string): string {
       if (typeof uploadLink === 'string' && uploadLink.trim()) return 'Uploaded'
       if (progress >= 75) return 'Ready to Film'
       if (progress > 0) return 'Learning'
@@ -829,12 +816,13 @@ export default defineComponent({
       return Boolean(owned && owned.favorite)
     },
     closeDance() { this.selectedDance = null },
-    coverForDance(dance: Dance): string {
-      if (dance.coverImage && this.isUsableCover(dance.coverImage)) return dance.coverImage
+    coverForDance(dance: any): string {
+      const cover = dance.coverImage || dance.cover_image
+      if (cover && this.isUsableCover(cover)) return cover
       const key = String(dance.id || `${dance.title}:${dance.artist}`)
       let hash = 0
       for (let index = 0; index < key.length; index += 1) hash = (hash * 31 + key.charCodeAt(index)) >>> 0
-      return DEFAULT_COVERS[hash % DEFAULT_COVERS.length]
+      return DEFAULT_COVERS[hash % DEFAULT_COVERS.length] ?? '/default-cover-1.svg'
     },
     isUsableCover(cover: string): boolean {
       if (cover.startsWith('/')) return true
@@ -846,9 +834,9 @@ export default defineComponent({
         return false
       }
     },
-    handleImageError(event: Event, dance?: Dance) {
-      const target = event.target as HTMLImageElement
-      const fallback = dance ? this.coverForDance({ ...dance, coverImage: '' }) : this.defaultCover
+    handleImageError(e: Event, dance?: any) {
+      const target = e.target as HTMLImageElement
+      const fallback = (dance ? this.coverForDance({ ...dance, cover_image: '' }) : this.defaultCover) ?? '/default-cover.jpg'
       if (target.src.endsWith(fallback)) return
       target.src = fallback
     },
@@ -923,7 +911,7 @@ export default defineComponent({
         : (typeof (dance as any).upload_link === 'string' ? (dance as any).upload_link : '')
       const hasUploadLink = Boolean(uploadLink && uploadLink.trim())
       const normalizedProgress = hasUploadLink ? 100 : progress
-      return {
+      const result: Dance = {
         id: dance.id ?? 0,
         title: dance.title ?? 'Untitled Dance',
         artist: dance.artist ?? 'Unknown Artist',
@@ -935,9 +923,12 @@ export default defineComponent({
         coverImage: dance.coverImage || (dance as any).cover_image || '',
         sourceLink: dance.sourceLink || (dance as any).source_link || '',
         uploadLink: uploadLink,
-        notes: dance.notes ?? '',
-        rank: dance.rank
+        notes: dance.notes ?? ''
       }
+      if (dance.rank !== undefined) {
+        result.rank = dance.rank
+      }
+      return result
     },
     selectCoverImage(event: Event) {
       const file = (event.target as HTMLInputElement).files?.[0] || null
