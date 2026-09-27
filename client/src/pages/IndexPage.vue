@@ -839,10 +839,25 @@ export default defineComponent({
     },
     normalizeDance(dance: Partial<Dance>): Dance {
       const progress = Math.min(100, Math.max(0, Number(dance.progress) || 0))
-      const hasUploadLink = typeof dance.uploadLink === 'string' && dance.uploadLink.trim()
+      const uploadLink = typeof dance.uploadLink === 'string' && dance.uploadLink.trim()
+        ? dance.uploadLink
+        : (typeof (dance as any).upload_link === 'string' ? (dance as any).upload_link : '')
+      const hasUploadLink = Boolean(uploadLink && uploadLink.trim())
       const normalizedProgress = hasUploadLink ? 100 : progress
       return {
-        id: dance.id ?? 0, title: dance.title ?? 'Untitled Dance', artist: dance.artist ?? 'Unknown Artist', category: dance.category ?? 'Other', difficulty: dance.difficulty ?? 'Medium', status: this.deriveStatus(normalizedProgress, dance.uploadLink ?? ''), progress: normalizedProgress, favorite: Boolean(dance.favorite), coverImage: dance.coverImage ?? '', sourceLink: dance.sourceLink ?? '', uploadLink: dance.uploadLink ?? '', notes: dance.notes ?? '', rank: dance.rank
+        id: dance.id ?? 0,
+        title: dance.title ?? 'Untitled Dance',
+        artist: dance.artist ?? 'Unknown Artist',
+        category: dance.category ?? 'Other',
+        difficulty: dance.difficulty ?? 'Medium',
+        status: this.deriveStatus(normalizedProgress, uploadLink),
+        progress: normalizedProgress,
+        favorite: Boolean(dance.favorite),
+        coverImage: dance.coverImage || (dance as any).cover_image || '',
+        sourceLink: dance.sourceLink || (dance as any).source_link || '',
+        uploadLink: uploadLink,
+        notes: dance.notes ?? '',
+        rank: dance.rank
       }
     },
     selectCoverImage(event: Event) {

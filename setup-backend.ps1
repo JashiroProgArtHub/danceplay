@@ -1,20 +1,34 @@
 $ErrorActionPreference = 'Stop'
+$root = $PSScriptRoot
+$server = Join-Path $root 'server'
 
-$root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$patch = Join-Path $root 'server'
-$tempPatch = Join-Path $root '_backend-patch'
-$backend = Join-Path $root 'server'
+Write-Host "Setting up DancePlay Backend..." -ForegroundColor Cyan
 
-Write-Host 'Preparing Laravel backend...'
-Rename-Item -Path $patch -NewName '_backend-patch'
-try {
-    composer create-project laravel/laravel backend
-    Copy-Item (Join-Path $tempPatch 'routes\api.php') (Join-Path $backend 'routes\api.php') -Force
-    New-Item -ItemType Directory -Force (Join-Path $backend 'app\Http\Controllers\Api') | Out-Null
-    Copy-Item (Join-Path $tempPatch 'app\Http\Controllers\Api\HelloController.php') (Join-Path $backend 'app\Http\Controllers\Api\HelloController.php') -Force
-    Write-Host 'Laravel backend created and API route installed.'
-    Write-Host 'Next: configure backend\.env, run php artisan install:api if your Laravel version requires it, then php artisan migrate and php artisan serve.'
+# 1. Check for PHP & Composer
+if (!(Get-Command php -ErrorAction SilentlyContinue)) { throw "PHP is not installed or not in PATH." }
+if (!(Get-Command composer -ErrorAction SilentlyContinue)) { throw "Composer is not installed or not in PATH." }
+
+Set-Location $server
+
+# 2. Install Dependencies
+Write-Host "Installing Composer dependencies..."
+composer install
+
+# 3. Environment Setup
+if (-not (Test-Path '.env')) {
+    Write-Host "Creating .env file..."
+    Copy-Item '.env.example' '.env'
+    
+    Write-Host "Generating application key..."
+    php artisan key:generate
 }
-finally {
-    if (Test-Path $tempPatch) { Remove-Item $tempPatch -Recurse -Force }
-}
+
+# 4. Database Setup
+Write-Host "Migrating database..."
+php artisan migrate
+
+# 5. Storage Link
+Write-Host "Linking storage..."
+php artisan storage:link
+
+Write-Host "Backend setup complete. Run 'php artisan serve' in the server directory." -ForegroundColor Green
