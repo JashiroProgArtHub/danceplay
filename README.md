@@ -2,13 +2,13 @@
 
 DancePlay is a dance-learning and tracking application organized as a two-workspace monorepo:
 
-- `client/` — Vue 3, Quasar, TypeScript, Vite, Pinia, and Axios frontend.
-- `server/` — Standard Laravel 12 API backend.
+- `frontend/` — Vue 3, Quasar, TypeScript, Vite, Pinia, and Axios frontend.
+- `backend/` — Standard Laravel 12 API backend.
 
 ## 1. Architecture
 
 ```text
-Quasar client
+Quasar frontend
     |
     | Axios requests through /api proxy
     v
@@ -18,14 +18,14 @@ Laravel 12 API backend
 MySQL database via XAMPP and Laravel storage
 ```
 
-The client provides the navigation shell, dashboard, discover view, favorites, dance collection, progress tracking, cover-art fallbacks, add/edit/delete flows, and backend connectivity check.
+The frontend provides the navigation shell, dashboard, discover view, favorites, dance collection, progress tracking, cover-art fallbacks, add/edit/delete flows, and backend connectivity check.
 
 ## 2. Repository layout
 
 ```text
 .
-├── client/              # Quasar/Vue application
-├── server/              # Standard Laravel 12 API backend
+├── frontend/            # Quasar/Vue application
+├── backend/             # Standard Laravel 12 API backend
 ├── setup-backend.ps1    # Windows backend preparation workflow
 ├── .gitignore
 └── README.md
@@ -39,7 +39,7 @@ Install the following before setup:
 - Node.js and npm
 - PHP 8.2 or newer
 - Composer
-- MySQL (via XAMPP), or another database configured in `server/.env`
+- MySQL (via XAMPP), or another database configured in `backend/.env`
 - PowerShell when using `setup-backend.ps1`
 
 ## 4. Backend setup
@@ -52,7 +52,7 @@ Install the following before setup:
 
 2. Ensure MySQL is running on port 3306 (e.g. via XAMPP Control Panel).
 
-3. Configure `server/.env` with database credentials:
+3. Configure `backend/.env` with database credentials:
 
 ```dotenv
 DB_CONNECTION=mysql
@@ -66,7 +66,7 @@ DB_PASSWORD=
 4. Run `php artisan migrate:fresh --seed` to build the database and populate default dances:
 
 ```powershell
-cd server
+cd backend
 php artisan migrate:fresh --seed
 ```
 
@@ -81,7 +81,7 @@ php artisan serve
 Install dependencies:
 
 ```powershell
-cd client
+cd frontend
 npm install
 ```
 
@@ -93,21 +93,21 @@ npm run build
 npm run lint
 ```
 
-Run `npm run dev` in a separate terminal while Laravel is serving the API. Quasar opens the development server and proxies `/api` requests to `http://127.0.0.1:8000` as configured in `client/quasar.config.ts`.
+Run `npm run dev` in a separate terminal while the backend is serving the API. Quasar opens the development server and proxies `/api` requests to `http://127.0.0.1:8000` as configured in `frontend/quasar.config.ts`.
 
 ## 6. Running both workspaces
 
-Terminal 1 — Laravel:
+Terminal 1 — Backend:
 
 ```powershell
-cd server
+cd backend
 php artisan serve
 ```
 
-Terminal 2 — Quasar:
+Terminal 2 — Frontend:
 
 ```powershell
-cd client
+cd frontend
 npm run dev
 ```
 
@@ -131,7 +131,7 @@ Response:
 }
 ```
 
-The endpoint is implemented by `server/routes/api.php` and `server/app/Http/Controllers/Api/HelloController.php`.
+The endpoint is implemented by `backend/routes/api.php` and `backend/app/Http/Controllers/Api/HelloController.php`.
 
 ### Expected dance contracts
 
@@ -152,14 +152,14 @@ favorite, cover_image, source_link, upload_link, notes,
 created_at, updated_at
 ```
 
-The client normalizes snake_case API fields such as `cover_image` and `source_link` into its TypeScript model.
+The frontend normalizes snake_case API fields such as `cover_image` and `source_link` into its TypeScript model.
 
 ## 8. Data, storage, and assets
 
-The client uses:
+The frontend uses:
 
-- `client/public/*.jpg` for seeded cover artwork.
-- `client/public/default-cover-*.svg` for deterministic fallback artwork.
+- `frontend/public/*.jpg` for seeded cover artwork.
+- `frontend/public/default-cover-*.svg` for deterministic fallback artwork.
 - Multipart `cover_image` payloads for server-backed uploads.
 - `/storage/` paths and remote HTTP(S) URLs when supplied by an API response.
 
@@ -172,7 +172,7 @@ Never commit private `.env` files, `node_modules/`, Composer `vendor/`, build ou
 Before opening a pull request:
 
 ```powershell
-cd client
+cd frontend
 npm run lint
 npm run build
 ```
@@ -180,7 +180,7 @@ npm run build
 Run the backend test suite:
 
 ```powershell
-cd server
+cd backend
 php artisan test
 ```
 

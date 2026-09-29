@@ -4,7 +4,9 @@
     <header class="topbar">
       <button class="mobile-menu" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Toggle navigation">☰</button>
       <a class="brand" href="#" @click.prevent="activeView = 'home'">
-        <span class="brand-mark">✦</span>
+        <q-avatar>
+          <img src="/logo.svg" alt="DancePlay Logo" @error="$event.target.src='https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg'">
+        </q-avatar>
         <span>DANCE<span class="brand-accent">PLAY</span></span>
       </a>
 
@@ -103,37 +105,6 @@
           </div>
         </section>
 
-        <!-- ACTIVITY 2 API DEMO -->
-        <section class="content-section api-demo-section">
-          <div class="section-heading">
-            <div>
-              <span class="eyebrow">LARAVEL CONNECTION</span>
-              <h2>Backend Test</h2>
-            </div>
-          </div>
-          <q-card flat bordered class="api-demo-card">
-            <q-card-section>
-              <div class="api-demo-copy">
-                <div>
-                  <strong>Vue 3 + Quasar → Axios → Laravel</strong>
-                  <p>Test the Activity 2 backend connection.</p>
-                </div>
-                <q-btn
-                  unelevated
-                  no-caps
-                  color="primary"
-                  class="api-test-btn"
-                  :loading="backendLoading"
-                  label="Test Backend"
-                  @click="testApi"
-                />
-              </div>
-              <div v-if="backendMessage" class="api-message">{{ backendMessage }}</div>
-              <div v-else-if="backendError" class="api-error">{{ backendError }}</div>
-              <div v-else class="api-hint">Click “Test Backend” to request <code>/api/hello</code> from Laravel.</div>
-            </q-card-section>
-          </q-card>
-        </section>
 
         <section class="content-section" v-if="!isInitialLoading && !loadError && learningDances.length">
           <div class="section-heading">
@@ -462,6 +433,38 @@
       <span>© 2026 DancePlay</span>
       <span>Discover it. Learn it. Film it. Upload it.</span>
     </footer>
+
+    <!-- ACTIVITY 2 API DEMO -->
+    <section class="content-section api-demo-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">LARAVEL CONNECTION</span>
+          <h2>Backend Test</h2>
+        </div>
+      </div>
+      <q-card flat bordered class="api-demo-card">
+        <q-card-section>
+          <div class="api-demo-copy">
+            <div>
+              <strong>Vue 3 + Quasar → Axios → Laravel</strong>
+              <p>Test the Activity 2 backend connection.</p>
+            </div>
+            <q-btn
+              unelevated
+              no-caps
+              color="primary"
+              class="api-test-btn"
+              :loading="backendLoading"
+              label="Test Backend"
+              @click="testApi"
+            />
+          </div>
+          <div v-if="backendMessage" class="api-message">{{ backendMessage }}</div>
+          <div v-else-if="backendError" class="api-error">{{ backendError }}</div>
+          <div v-else class="api-hint">Click “Test Backend” to request <code>/api/hello</code> from Laravel.</div>
+        </q-card-section>
+      </q-card>
+    </section>
   </q-page>
 </template>
 
@@ -1002,6 +1005,10 @@ export default defineComponent({
 }
 .filter-dropdown:focus {
   border-color: rgba(184, 108, 255, 0.5);
+}
+.api-demo-section {
+  width: min(1400px, 90%);
+  margin: 20px auto 40px;
 }
 .api-demo-card {
   background: var(--panel);

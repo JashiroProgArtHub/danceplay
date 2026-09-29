@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-$server = Join-Path $root 'server'
+$backend = Join-Path $root 'backend'
 
 Write-Host "Setting up DancePlay Backend..." -ForegroundColor Cyan
 
@@ -8,7 +8,7 @@ Write-Host "Setting up DancePlay Backend..." -ForegroundColor Cyan
 if (!(Get-Command php -ErrorAction SilentlyContinue)) { throw "PHP is not installed or not in PATH." }
 if (!(Get-Command composer -ErrorAction SilentlyContinue)) { throw "Composer is not installed or not in PATH." }
 
-Set-Location $server
+Set-Location $backend
 
 # 2. Install Dependencies
 Write-Host "Installing Composer dependencies..."
@@ -31,4 +31,4 @@ php artisan migrate
 Write-Host "Linking storage..."
 php artisan storage:link
 
-Write-Host "Backend setup complete. Run 'php artisan serve' in the server directory." -ForegroundColor Green
+Write-Host "Backend setup complete. Run 'php artisan serve' in the backend directory." -ForegroundColor Green
