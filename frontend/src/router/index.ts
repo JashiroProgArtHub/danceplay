@@ -8,7 +8,7 @@ const router = createRouter({
     { path: '/home', component: IndexPage },
     { path: '/dances', component: IndexPage },
     { path: '/dances/:id', component: IndexPage },
-    { path: '/discover', component: IndexPage },
+    { path: '/discover', redirect: '/dances' },
     { path: '/favorites', component: IndexPage }
   ],
   scrollBehavior(to, from, savedPosition) {

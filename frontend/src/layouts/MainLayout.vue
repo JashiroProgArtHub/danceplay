@@ -3,7 +3,11 @@
     <q-header elevated>
       <q-toolbar>
         <q-avatar>
-          <img src="/logo.svg" alt="DancePlay Logo" @error="$event.target.src='https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg'">
+          <img
+            src="/logo.svg"
+            alt="DancePlay Logo"
+            @error="handleLogoError"
+          >
         </q-avatar>
         <q-toolbar-title>
           DANCEPLAY
@@ -17,10 +21,11 @@
   </q-layout>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  name: 'MainLayout'
-})
+<script setup lang="ts">
+function handleLogoError(event: Event) {
+  const target = event.target as HTMLImageElement
+  if (target) {
+    target.src = 'https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg'
+  }
+}
 </script>

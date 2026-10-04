@@ -1,7 +1,7 @@
 import { defineConfig } from '#q-app/wrappers'
 
 export default defineConfig(() => ({
-  boot: [],
+  boot: ['pinia'],
   css: ['app.scss'],
   extras: ['material-icons'],
   build: {
@@ -18,6 +18,10 @@ export default defineConfig(() => ({
     open: true,
     proxy: {
       '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true
+      },
+      '/storage': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true
       }

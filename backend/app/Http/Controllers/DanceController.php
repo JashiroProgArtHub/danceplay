@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
+use App\Http\Requests\StoreDanceRequest;
+use App\Http\Requests\UpdateDanceRequest;
+
 class DanceController extends Controller
 {
     public function index(Request $request)
@@ -33,80 +36,69 @@ class DanceController extends Controller
         return response()->json($query->paginate(12));
     }
 
-    public function store(Request $request)
+    public function trending(): JsonResponse
     {
-        if ($request->has('sourceLink') && !$request->has('source_link')) {
-            $request->merge(['source_link' => $request->input('sourceLink')]);
-        }
-        if ($request->has('uploadLink') && !$request->has('upload_link')) {
-            $request->merge(['upload_link' => $request->input('uploadLink')]);
-        }
-        if ($request->has('coverImage') && !$request->has('cover_image')) {
-            $request->merge(['cover_image' => $request->input('coverImage')]);
-        }
+        $dances = Dance::query()
+            ->orderBy('favorite', 'desc')
+            ->orderBy('progress', 'desc')
+            ->orderBy('id', 'asc')
+            ->take(5)
+            ->get()
+            ->values()
+            ->map(function ($dance, $index) {
+                $dance->rank = $index + 1;
+                return $dance;
+            });
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'artist' => 'required|string|max:255',
-            'category' => 'required|string|max:255',
-            'difficulty' => 'required|string|max:255',
-            'status' => 'string',
-            'progress' => 'integer',
-            'favorite' => 'boolean',
-            'source_link' => 'nullable|string',
-            'upload_link' => 'nullable|string',
-            'notes' => 'nullable|string',
+        return response()->json($dances);
+    }
+
+    public function stats(): JsonResponse
+    {
+        return response()->json([
+            'total' => Dance::count(),
+            'learning' => Dance::where('status', 'Learning')->count(),
+            'ready' => Dance::where('status', 'Ready to Film')->count(),
+            'uploaded' => Dance::where('status', 'Uploaded')->count(),
+            'want_to_learn' => Dance::where('status', 'Want to Learn')->count(),
+            'favorites' => Dance::where('favorite', true)->count(),
         ]);
+    }
+
+    public function store(StoreDanceRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
 
         if ($request->hasFile('cover_image')) {
-            $request->validate(['cover_image' => 'image|mimes:jpeg,png,jpg,webp|max:2048']);
             $path = $request->file('cover_image')->store('covers', 'public');
             $validated['cover_image'] = '/storage/' . $path;
-        } else {
-            $validated['cover_image'] = $request->input('cover_image');
+        } elseif ($request->exists('cover_image')) {
+            $rawCover = $request->input('cover_image');
+            $validated['cover_image'] = !empty($rawCover) ? $rawCover : null;
         }
 
         $dance = Dance::create($validated);
         return response()->json($dance, 201);
     }
 
-    public function update(Request $request, Dance $dance)
+    public function update(UpdateDanceRequest $request, Dance $dance): JsonResponse
     {
-        if ($request->has('sourceLink') && !$request->has('source_link')) {
-            $request->merge(['source_link' => $request->input('sourceLink')]);
-        }
-        if ($request->has('uploadLink') && !$request->has('upload_link')) {
-            $request->merge(['upload_link' => $request->input('uploadLink')]);
-        }
-        if ($request->has('coverImage') && !$request->has('cover_image')) {
-            $request->merge(['cover_image' => $request->input('coverImage')]);
-        }
-
-        $validated = $request->validate([
-            'title' => 'string|max:255',
-            'artist' => 'string|max:255',
-            'category' => 'string|max:255',
-            'difficulty' => 'string|max:255',
-            'status' => 'string',
-            'progress' => 'integer',
-            'favorite' => 'boolean',
-            'source_link' => 'nullable|string',
-            'upload_link' => 'nullable|string',
-            'notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         if ($request->hasFile('cover_image')) {
-            $request->validate(['cover_image' => 'image|mimes:jpeg,png,jpg,webp|max:2048']);
-            
-            // Delete old image if exists
+            // Delete old disk file if exists
             if ($dance->cover_image && str_starts_with($dance->cover_image, '/storage/covers/')) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $dance->cover_image));
             }
             
             $path = $request->file('cover_image')->store('covers', 'public');
             $validated['cover_image'] = '/storage/' . $path;
-        } elseif ($request->has('cover_image')) {
-            $validated['cover_image'] = $request->input('cover_image');
+        } elseif ($request->exists('cover_image')) {
+            $newCover = $request->input('cover_image');
+            if (empty($newCover) && $dance->cover_image && str_starts_with($dance->cover_image, '/storage/covers/')) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $dance->cover_image));
+            }
+            $validated['cover_image'] = !empty($newCover) ? $newCover : null;
         }
 
         $dance->update($validated);
@@ -115,12 +107,16 @@ class DanceController extends Controller
 
     public function destroy(Dance $dance): JsonResponse
     {
-        if ($dance->cover_image && str_starts_with($dance->cover_image, '/storage/covers/')) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $dance->cover_image));
-        }
-
         $dance->delete();
 
         return response()->json(null, 204);
+    }
+
+    public function restore($id): JsonResponse
+    {
+        $dance = Dance::onlyTrashed()->findOrFail($id);
+        $dance->restore();
+
+        return response()->json($dance, 200);
     }
 }

@@ -27,85 +27,99 @@ export interface Dance {
   rank?: number | undefined
 }
 
-export interface DanceData {
-  title?: string
-  artist?: string
-  category?: string
-  difficulty?: string
-  status?: string
-  progress?: number
-  favorite?: boolean
-  coverImage?: string
-  cover_image?: string
-  coverFile?: File | null
-  sourceLink?: string
-  source_link?: string
-  uploadLink?: string
-  upload_link?: string
-  notes?: string
+export interface PaginatedDancesResponse {
+  data: Dance[]
+  current_page: number
+  last_page: number
+  total: number
 }
 
-function mapDance(data: any): Dance {
-  return {
-    ...data,
-    id: data.id !== undefined ? Number(data.id) : 0,
-    title: String(data.title ?? ''),
-    artist: String(data.artist ?? ''),
-    category: String(data.category ?? 'Other'),
-    difficulty: String(data.difficulty ?? 'Medium'),
-    status: String(data.status ?? 'Want to Learn'),
-    progress: Number(data.progress ?? 0),
-    favorite: Boolean(data.favorite),
-    coverImage: String(data.cover_image ?? data.coverImage ?? ''),
-    cover_image: String(data.cover_image ?? data.coverImage ?? ''),
-    sourceLink: String(data.source_link ?? data.sourceLink ?? ''),
-    source_link: String(data.source_link ?? data.sourceLink ?? ''),
-    uploadLink: String(data.upload_link ?? data.uploadLink ?? ''),
-    upload_link: String(data.upload_link ?? data.uploadLink ?? ''),
-    notes: String(data.notes ?? ''),
-    createdAt: data.created_at,
-    updatedAt: data.updated_at
-  }
+export const getDances = async (
+  params: Record<string, string | number | boolean> = {}
+): Promise<PaginatedDancesResponse> => {
+  const response = await api.get<PaginatedDancesResponse>('/dances', { params })
+  return response.data
 }
 
-export const getDances = async (params: Record<string, any> = {}) => {
-  const response = await api.get('/dances', { params })
-  return response.data // Returns { data: [...], current_page, last_page }
+export interface DanceStats {
+  total: number
+  learning: number
+  ready: number
+  uploaded: number
+  want_to_learn: number
+  favorites: number
 }
 
-export const createDance = async (dance: Partial<Dance> & { coverFile?: File | null }): Promise<Dance> => {
+export const getDanceStats = async (): Promise<DanceStats> => {
+  const response = await api.get<DanceStats>('/dances/stats')
+  return response.data
+}
+
+export const getTrendingDances = async (): Promise<Dance[]> => {
+  const response = await api.get<Dance[]>('/dances/trending')
+  return response.data
+}
+
+export const createDance = async (
+  dance: Partial<Dance> & { coverFile?: File | null }
+): Promise<Dance> => {
   const formData = new FormData()
   Object.entries(dance).forEach(([key, value]) => {
-    if (value !== null && value !== undefined && key !== 'coverFile') {
+    if (
+      value !== null &&
+      value !== undefined &&
+      key !== 'coverFile' &&
+      key !== 'coverImage' &&
+      key !== 'cover_image' &&
+      key !== 'id'
+    ) {
       formData.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value))
     }
   })
-  
+
   if (dance.coverFile) {
     formData.append('cover_image', dance.coverFile)
+  } else if (dance.coverImage !== undefined) {
+    formData.append('cover_image', dance.coverImage)
+  } else if (dance.cover_image !== undefined) {
+    formData.append('cover_image', dance.cover_image)
   }
 
-  const response = await api.post('/dances', formData, {
+  const response = await api.post<Dance>('/dances', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
   return response.data
 }
 
-export const updateDance = async (id: number | string, dance: Partial<Dance> & { coverFile?: File | null }): Promise<Dance> => {
+export const updateDance = async (
+  id: number | string,
+  dance: Partial<Dance> & { coverFile?: File | null }
+): Promise<Dance> => {
   const formData = new FormData()
-  formData.append('_method', 'PATCH') // Spoof PATCH for PHP multipart routing
-  
+  formData.append('_method', 'PATCH')
+
   Object.entries(dance).forEach(([key, value]) => {
-    if (value !== null && value !== undefined && key !== 'coverFile' && key !== 'id') {
+    if (
+      value !== null &&
+      value !== undefined &&
+      key !== 'coverFile' &&
+      key !== 'coverImage' &&
+      key !== 'cover_image' &&
+      key !== 'id'
+    ) {
       formData.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value))
     }
   })
 
   if (dance.coverFile) {
     formData.append('cover_image', dance.coverFile)
+  } else if (dance.coverImage !== undefined) {
+    formData.append('cover_image', dance.coverImage)
+  } else if (dance.cover_image !== undefined) {
+    formData.append('cover_image', dance.cover_image)
   }
 
-  const response = await api.post(`/dances/${id}`, formData, {
+  const response = await api.post<Dance>(`/dances/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
   return response.data
@@ -113,4 +127,9 @@ export const updateDance = async (id: number | string, dance: Partial<Dance> & {
 
 export const deleteDance = async (id: number | string): Promise<void> => {
   await api.delete(`/dances/${id}`)
+}
+
+export const restoreDance = async (id: number | string): Promise<Dance> => {
+  const response = await api.post<Dance>(`/dances/${id}/restore`)
+  return response.data
 }

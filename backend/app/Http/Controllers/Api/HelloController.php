@@ -10,7 +10,7 @@ class HelloController extends Controller
     public function index(): JsonResponse
     {
         return response()->json([
-            'message' => 'Hello from Jashen Loberanes!',
+            'message' => 'Hello from Mundia, Loberanes, Daro, and Villacorta! -MLDV',
         ]);
     }
 }
