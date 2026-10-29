@@ -33,27 +33,45 @@ The frontend provides the navigation shell, dashboard, discover view, favorites,
 
 ## 3. Prerequisites
 
-Install the following before setup:
+Make sure the following tools are installed on your machine before running the project:
 
-- Git
-- Node.js and npm
-- PHP 8.2 or newer
-- Composer
-- MySQL (via XAMPP), or another database configured in `backend/.env`
-- PowerShell when using `setup-backend.ps1`
+- **Git**
+- **Node.js** (v18 or v20 LTS recommended) and **npm** (`node -v`, `npm -v`)
+- **XAMPP** (with Apache and MySQL)
+- **PHP 8.2 or newer** (`php -v`)
+  > **Tip**: If `php` is not recognized in your terminal, add your PHP folder (e.g. `C:\xampp\php`) to your Windows System Environment Variables `PATH`. Also ensure extensions `pdo_mysql`, `fileinfo`, and `curl` are enabled in `php.ini`.
+- **Composer** (`composer -v`)
+- **PowerShell** (for Windows terminal commands)
 
-## 4. Backend setup
+---
 
-1. Run `setup-backend.ps1` from the repository root to install Composer dependencies, generate the app key, and link storage:
+## 4. Local Environment Setup (Step-by-Step)
+
+Follow these steps in order when setting up the repository for the first time:
+
+### Step 1: Start XAMPP & Create the Database
+1. Open the **XAMPP Control Panel**.
+2. Click **Start** for both **Apache** and **MySQL**.
+   - Ensure MySQL shows port `3306` (or note down your custom port).
+3. Open your browser and navigate to phpMyAdmin:
+   ```text
+   http://localhost/phpmyadmin
+   ```
+4. Click the **Databases** tab at the top.
+5. In **Database name**, enter: `danceplay`
+6. Click **Create**.
+
+---
+
+### Step 2: Backend Setup (Laravel)
+Open PowerShell and navigate to the backend directory:
 
 ```powershell
-.\setup-backend.ps1
+cd backend
+copy .env.example .env
 ```
 
-2. Ensure MySQL is running on port 3306 (e.g. via XAMPP Control Panel).
-
-3. Configure `backend/.env` with database credentials:
-
+Verify your `backend/.env` file contains the following database configuration:
 ```dotenv
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -62,56 +80,67 @@ DB_DATABASE=danceplay
 DB_USERNAME=root
 DB_PASSWORD=
 ```
+*(If your XAMPP MySQL uses a custom port like `3307` or a custom root password, adjust `DB_PORT` and `DB_PASSWORD` accordingly).*
 
-4. Run `php artisan migrate:fresh --seed` to build the database and populate default dances:
+Now, install dependencies, prepare keys, migrate, and seed the starter data:
 
 ```powershell
-cd backend
+# 1. Install PHP dependencies
+composer install
+
+# 2. Generate application encryption key
+php artisan key:generate
+
+# 3. Create tables and populate starter dance data
 php artisan migrate:fresh --seed
-```
 
-5. Run `php artisan serve`:
+# 4. Link public storage (required for dance cover image uploads)
+php artisan storage:link
 
-```powershell
+# 5. Start the Laravel API server
 php artisan serve
 ```
+The backend API is now running at `http://127.0.0.1:8000`. Keep this terminal open!
 
-## 5. Frontend setup and scripts
+> **Automated Shortcut**: Alternatively, you can run `.\setup-backend.ps1` from the repository root after starting XAMPP and creating `danceplay` in phpMyAdmin.
 
-Install dependencies:
+---
+
+### Step 3: Frontend Setup (Vue / Quasar)
+Open a **second terminal window**:
 
 ```powershell
 cd frontend
 npm install
-```
-
-Available scripts:
-
-```powershell
-npm run dev
-npm run build
-npm run lint
-```
-
-Run `npm run dev` in a separate terminal while the backend is serving the API. Quasar opens the development server and proxies `/api` requests to `http://127.0.0.1:8000` as configured in `frontend/quasar.config.ts`.
-
-## 6. Running both workspaces
-
-Terminal 1 — Backend:
-
-```powershell
-cd backend
-php artisan serve
-```
-
-Terminal 2 — Frontend:
-
-```powershell
-cd frontend
 npm run dev
 ```
 
-Open the URL printed by Quasar. Use the **Test Backend** action on the home view to verify the client-to-server connection.
+Quasar will launch and provide a local URL (typically `http://localhost:9000`).
+
+---
+
+## 5. Verification & Testing Connection
+1. Open `http://localhost:9000` in your browser.
+2. The dashboard should load and display the seeded starter dances (*Magnetic, Espresso, Supernova, Drama, etc.*).
+3. To test client-to-server connectivity:
+   * Open the user menu (or look for the API test card).
+   * Click **Test Backend / Laravel API Test**.
+   * It should return a success message from `/api/hello`.
+4. Open phpMyAdmin (`http://localhost/phpmyadmin` -> `danceplay` -> `dances` table) to verify your records are in MySQL.
+
+---
+
+## 6. Common Pitfalls & Troubleshooting
+
+| Issue / Error | Cause | Solution |
+| :--- | :--- | :--- |
+| **`SQLSTATE[HY000] [1049] Unknown database 'danceplay'`** | The database has not been created in phpMyAdmin yet. | Open `http://localhost/phpmyadmin`, click **Databases**, create `danceplay`, then re-run `php artisan migrate:fresh --seed`. |
+| **`SQLSTATE[HY000] [2002] Connection refused`** | MySQL is not running in XAMPP or is on a different port. | Open XAMPP Control Panel, start **MySQL**. Check what port it displays (e.g. `3306` or `3307`) and match `DB_PORT` in `backend/.env`. |
+| **`Column not found: Unknown column 'dances.deleted_at'`** (500 Error) | Migration history is out of sync or old table schema exists. | Run `php artisan migrate:fresh --seed` in `backend/` to cleanly re-apply all migrations including soft-deletes. |
+| **Blank Dashboard / 0 dances shown** | Migrations were run without the seeder flag. | Run `php artisan migrate:fresh --seed` to populate starter dances. |
+| **Broken / Missing Uploaded Cover Images (404)** | Laravel storage link was not created. | Run `php artisan storage:link` inside `backend/`. |
+| **`'php'` or `'composer'` is not recognized** | PHP / Composer is not in your system environment PATH. | Add your PHP directory (e.g. `C:\xampp\php`) to your Windows User/System `PATH` variable and restart PowerShell. |
+
 
 ## 7. API contracts
 

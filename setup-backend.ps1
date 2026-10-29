@@ -24,8 +24,8 @@ if (-not (Test-Path '.env')) {
 }
 
 # 4. Database Setup
-Write-Host "Migrating database..."
-php artisan migrate
+Write-Host "Migrating and seeding database (Ensure MySQL is running & 'danceplay' database is created in phpMyAdmin)..." -ForegroundColor Yellow
+php artisan migrate:fresh --seed
 
 # 5. Storage Link
 Write-Host "Linking storage..."
