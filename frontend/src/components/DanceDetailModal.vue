@@ -5,7 +5,13 @@
     transition-hide="scale"
     @update:model-value="onDialogChange"
   >
-    <div v-if="dance" class="detail-modal">
+    <div
+      v-if="dance"
+      class="detail-modal"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="`${dance.title} details`"
+    >
       <button class="close-btn" @click="emit('close')" aria-label="Close modal">×</button>
       
       <div class="detail-cover">
@@ -234,20 +240,30 @@ function onScrubProgress(e: Event) {
   localProgress.value = Math.min(100, Math.max(0, val))
 }
 
+let progressTimer: number | undefined
+
 function onCommitProgress() {
   if (!props.dance) return
+  if (progressTimer) window.clearTimeout(progressTimer)
   void store.setProgress(props.dance, localProgress.value)
 }
 
-function adjustProgress(amount: number) {
+function debouncedSyncProgress(targetValue: number) {
   if (!props.dance) return
-  localProgress.value = Math.min(100, Math.max(0, localProgress.value + amount))
-  void store.updateProgress(props.dance, amount)
+  localProgress.value = Math.min(100, Math.max(0, targetValue))
+  if (progressTimer) window.clearTimeout(progressTimer)
+  progressTimer = window.setTimeout(() => {
+    if (props.dance) {
+      void store.setProgress(props.dance, localProgress.value)
+    }
+  }, 250)
+}
+
+function adjustProgress(amount: number) {
+  debouncedSyncProgress(localProgress.value + amount)
 }
 
 function setProgress(amount: number) {
-  if (!props.dance) return
-  localProgress.value = Math.min(100, Math.max(0, amount))
-  void store.setProgress(props.dance, amount)
+  debouncedSyncProgress(amount)
 }
 </script>

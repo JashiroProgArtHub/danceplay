@@ -30,14 +30,13 @@ const props = withDefaults(
     status: string
     progress?: number
     isTrending?: boolean
-    rank?: number
+    rank?: number | undefined
     isUploaded?: boolean
     mode?: 'card' | 'detail'
   }>(),
   {
     progress: 0,
     isTrending: false,
-    rank: undefined,
     isUploaded: false,
     mode: 'card'
   }

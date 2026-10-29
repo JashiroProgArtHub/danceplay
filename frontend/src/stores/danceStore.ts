@@ -141,6 +141,11 @@ export const useDanceStore = defineStore('dance', {
     learningDances: (state) => state.dances.filter((d) => d.status === 'Learning'),
     uploadedDances: (state) => state.dances.filter((d) => d.status === 'Uploaded'),
     favoriteDances: (state) => state.dances.filter((d) => d.favorite),
+    recentlyAddedDances: (state) => {
+      return [...state.dances]
+        .sort((a, b) => Number(b.id) - Number(a.id))
+        .slice(0, 5)
+    },
     nextDance: (state): Dance | null => {
       const statuses = ['Ready to Film', 'Learning', 'Want to Learn']
       for (const status of statuses) {
@@ -427,22 +432,6 @@ export const useDanceStore = defineStore('dance', {
         this.showToast(`Deleted “${deletedTitle}”`, 'Undo', () => {
           void this.restoreDance(deletedId)
         })
-        Notify.create({
-          message: `Deleted “${deletedTitle}”`,
-          color: 'purple-10',
-          textColor: 'white',
-          position: 'bottom-right',
-          timeout: 7000,
-          actions: [
-            {
-              label: 'Undo',
-              color: 'yellow',
-              handler: () => {
-                void this.restoreDance(deletedId)
-              }
-            }
-          ]
-        })
       } catch (error) {
         console.error('Delete dance failed:', error)
         Notify.create({
@@ -466,12 +455,6 @@ export const useDanceStore = defineStore('dance', {
           this.totalCount = (this.totalCount || 0) + 1
         }
         this.showToast(`Restored “${normalized.title}”`)
-        Notify.create({
-          message: `Restored “${normalized.title}”`,
-          color: 'positive',
-          position: 'bottom-right',
-          timeout: 3000
-        })
         void this.fetchStats()
         void this.fetchTrendingDances()
       } catch (error) {

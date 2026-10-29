@@ -15,6 +15,7 @@
           {{ editingDance ? 'Update practice milestones, video links, or choreography notes.' : 'Quickly save a choreography you want to practice, film, or track.' }}
         </p>
 
+        <fieldset :disabled="store.mutationLoading" style="border: 0; padding: 0; margin: 0; min-width: 0;">
         <!-- SECTION 1: ESSENTIALS (QUICK ADD) -->
         <div class="form-grid">
           <label>
@@ -146,17 +147,35 @@
             <div class="form-grid">
               <label class="full">
                 Original Dance / Tutorial Link
-                <input v-model.trim="form.sourceLink" type="url" placeholder="https://www.youtube.com/watch?v=...">
+                <input
+                  v-model.trim="form.sourceLink"
+                  type="url"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  @blur="onNormalizeLinks"
+                >
                 <small>YouTube links automatically enable the in-app practice player and auto-cover.</small>
               </label>
               <label class="full">
                 My Upload Link
-                <input v-model.trim="form.uploadLink" type="url" placeholder="https://www.tiktok.com/@dancer/video/...">
+                <input
+                  v-model.trim="form.uploadLink"
+                  type="url"
+                  placeholder="https://www.tiktok.com/@dancer/video/..."
+                  @blur="onNormalizeLinks"
+                >
                 <small>Attaching your cover performance link automatically marks the routine as Uploaded.</small>
               </label>
               <label class="full">
-                Choreography Notes
-                <textarea v-model.trim="form.notes" rows="3" placeholder="Key 8-counts, tricky footwork transitions, formation cues..."></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <span>Choreography Notes</span>
+                  <span style="font-size: 10px; font-weight: 400; color: var(--muted);">{{ form.notes?.length || 0 }}/500</span>
+                </div>
+                <textarea
+                  v-model.trim="form.notes"
+                  rows="3"
+                  maxlength="500"
+                  placeholder="Key 8-counts, tricky footwork transitions, formation cues..."
+                ></textarea>
               </label>
             </div>
           </div>
@@ -169,6 +188,7 @@
           v-model:cover-file="form.coverFile"
           :source-link="form.sourceLink"
         />
+        </fieldset>
 
         <!-- FORM ACTIONS -->
         <div class="form-actions" :class="{ 'has-delete': Boolean(editingDance) }">
@@ -409,7 +429,27 @@ async function onConfirmDeleteFromEdit() {
   await store.confirmDelete(danceToDelete)
 }
 
+function normalizeUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(trimmed)) {
+    return `https://${trimmed}`
+  }
+  return trimmed
+}
+
+function onNormalizeLinks() {
+  if (form.value.sourceLink) {
+    form.value.sourceLink = normalizeUrl(form.value.sourceLink)
+  }
+  if (form.value.uploadLink) {
+    form.value.uploadLink = normalizeUrl(form.value.uploadLink)
+  }
+}
+
 async function onSave() {
+  onNormalizeLinks()
   try {
     await store.saveDance(form.value, form.value.coverFile)
     emit('saved')

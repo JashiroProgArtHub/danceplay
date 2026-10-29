@@ -1,5 +1,13 @@
 <template>
-  <article class="dance-card" @click="emit('open', dance)">
+  <article
+    class="dance-card"
+    role="button"
+    tabindex="0"
+    :aria-label="`Open ${dance.title} by ${dance.artist}`"
+    @click="emit('open', dance)"
+    @keydown.enter.prevent="emit('open', dance)"
+    @keydown.space.prevent="emit('open', dance)"
+  >
     <div class="card-image">
       <DanceCoverImage
         :dance="dance"

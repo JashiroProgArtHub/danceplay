@@ -59,6 +59,31 @@
             </div>
           </section>
 
+          <!-- Home Initial Loading Skeletons -->
+          <section class="content-section" v-if="store.isInitialLoading" aria-label="Loading active routines">
+            <div class="section-heading">
+              <div>
+                <span class="eyebrow">PREPARING</span>
+                <h2>Active Routines</h2>
+              </div>
+            </div>
+            <div class="dance-row">
+              <div
+                v-for="idx in 5"
+                :key="`home-skel-${idx}`"
+                class="dance-card dance-card-skeleton"
+                style="flex: 0 0 230px;"
+              >
+                <div class="card-image-skeleton"></div>
+                <div class="card-body-skeleton">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <!-- Continue Learning Section -->
           <section class="content-section" v-if="!store.isInitialLoading && !store.loadError && store.learningDances.length">
             <div class="section-heading">
@@ -71,6 +96,27 @@
             <div class="dance-row">
               <DanceCard
                 v-for="dance in store.learningDances.slice(0, 5)"
+                :key="dance.id"
+                :dance="dance"
+                active-view="home"
+                @open="store.openDance"
+                @toggle-favorite="store.toggleFavorite"
+              />
+            </div>
+          </section>
+
+          <!-- Recently Added Section -->
+          <section class="content-section" v-if="!store.isInitialLoading && !store.loadError && store.recentlyAddedDances.length">
+            <div class="section-heading">
+              <div>
+                <span class="eyebrow">NEW IN COLLECTION</span>
+                <h2>Recently Added</h2>
+              </div>
+              <button class="text-btn" @click="navigate('dances')">See all →</button>
+            </div>
+            <div class="dance-row">
+              <DanceCard
+                v-for="dance in store.recentlyAddedDances"
                 :key="dance.id"
                 :dance="dance"
                 active-view="home"
@@ -209,19 +255,30 @@
             <div class="empty-icon">✦</div>
             <h2 v-if="activeView === 'favorites'">No favorites yet</h2>
             <h2 v-else-if="store.searchQuery">No dances found</h2>
-            <h2 v-else-if="store.statusFilter !== 'All'">No dances match this filter</h2>
+            <h2 v-else-if="store.statusFilter !== 'All' || store.categoryFilter !== 'All'">No dances match your filters</h2>
             <h2 v-else>No dances here yet</h2>
-            <p v-if="store.searchQuery">Try a different search term.</p>
-            <p v-else-if="activeView === 'favorites'">Tap the heart on a dance to save it here.</p>
-            <p v-else-if="store.statusFilter !== 'All'">Choose another status filter to see more dances.</p>
+            <p v-if="store.searchQuery">No dances matched "{{ store.searchQuery }}". Try a different search term or clear filters.</p>
+            <p v-else-if="activeView === 'favorites'">Tap the heart on any dance to save it for quick practice.</p>
+            <p v-else-if="store.statusFilter !== 'All' || store.categoryFilter !== 'All'">Try resetting your filters or selecting a different category.</p>
             <p v-else>Add your first dance and start tracking your progress.</p>
-            <button
-              v-if="activeView === 'dances' && !store.searchQuery && store.statusFilter === 'All'"
-              class="primary-btn"
-              @click="store.openAddModal"
-            >
-              + Add Dance
-            </button>
+            <div class="empty-state-actions" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; justify-content: center;">
+              <button
+                v-if="hasActiveFilters"
+                type="button"
+                class="secondary-btn"
+                @click="resetFilters"
+              >
+                ✕ Clear Filters & Search
+              </button>
+              <button
+                v-if="activeView === 'dances' && !hasActiveFilters"
+                type="button"
+                class="primary-btn"
+                @click="store.openAddModal"
+              >
+                + Add Dance
+              </button>
+            </div>
           </div>
         </section>
       </Transition>
@@ -324,8 +381,27 @@ function navigate(view: string) {
   activeView.value = view
   store.searchQuery = ''
   store.statusFilter = 'All'
+  store.categoryFilter = 'All'
   void router.push(`/${view}`)
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const hasActiveFilters = computed(() => {
+  return Boolean(
+    store.searchQuery.trim() ||
+    store.statusFilter !== 'All' ||
+    store.categoryFilter !== 'All'
+  )
+})
+
+function resetFilters() {
+  store.searchQuery = ''
+  store.statusFilter = 'All'
+  store.categoryFilter = 'All'
+  if (activeView.value === 'dances') {
+    void router.push('/dances')
+  }
+  void store.fetchDances(1, false)
 }
 
 function setStatusFilter(filter: string) {

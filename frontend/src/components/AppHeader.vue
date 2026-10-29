@@ -14,12 +14,26 @@
     </nav>
 
     <div class="header-actions">
-      <button class="icon-btn" @click="onNavigate('dances')" title="Search Dances">⌕</button>
+      <button
+        class="icon-btn"
+        type="button"
+        title="Search Dances"
+        aria-label="Search dances"
+        @click="onNavigate('dances')"
+      >
+        ⌕
+      </button>
       <button class="topbar-add-btn" @click="emit('openAdd')" title="Add New Dance">
         <q-icon name="add" size="18px" />
         <span class="add-text">Add Dance</span>
       </button>
-      <button class="avatar" title="Profile Menu" type="button">
+      <button
+        class="avatar"
+        title="Profile Menu"
+        type="button"
+        aria-label="Profile and account menu"
+        aria-haspopup="menu"
+      >
         <span>D</span>
         <q-menu anchor="bottom right" self="top right" :offset="[0, 10]" class="profile-menu-panel">
           <div class="profile-menu-header">

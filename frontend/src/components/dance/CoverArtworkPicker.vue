@@ -69,14 +69,23 @@
             <span v-else>Paste a YouTube tutorial link below to auto-fetch video artwork, or use the default vector cover.</span>
           </div>
 
-          <div v-else-if="coverMode === 'file'" class="cover-tab-file">
+          <div
+            v-else-if="coverMode === 'file'"
+            class="cover-tab-file"
+            :class="{ 'is-dragging': isDragging }"
+            @dragover.prevent="isDragging = true"
+            @dragleave.prevent="isDragging = false"
+            @drop.prevent="onDropFile"
+          >
             <button
               type="button"
               class="file-upload-btn"
+              :class="{ 'file-upload-btn-dragging': isDragging }"
               @click="triggerFileInput"
             >
-              📁 {{ coverFile ? coverFile.name : (isServerUploadedCover ? 'Existing uploaded file (click to replace)...' : 'Choose an image file (JPEG, PNG, WebP up to 2MB)...') }}
+              📁 {{ coverFile ? coverFile.name : (isServerUploadedCover ? 'Existing uploaded file (click or drop to replace)...' : 'Choose or drop an image file (JPEG, PNG, WebP up to 2MB)...') }}
             </button>
+            <small v-if="fileError" class="text-negative q-mt-xs" style="display: block;">{{ fileError }}</small>
           </div>
 
           <div v-else class="cover-tab-url">
@@ -149,6 +158,8 @@ const coverMode = ref<'auto' | 'file' | 'url'>('auto')
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const tempUrlInput = ref('')
 const urlError = ref('')
+const fileError = ref('')
+const isDragging = ref(false)
 const urlTesting = ref(false)
 
 const confirmingReset = ref(false)
@@ -300,13 +311,17 @@ function undoCoverReset() {
   urlError.value = ''
 }
 
-function onSelectCoverFile(event: Event) {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0] || null
+function handleFileSelection(file: File | null) {
   if (!file) return
+  fileError.value = ''
+
+  if (!file.type.startsWith('image/')) {
+    fileError.value = 'Please select a valid image file (JPEG, PNG, WebP).'
+    return
+  }
 
   if (file.size > 2 * 1024 * 1024) {
-    alert('Cover image must be 2MB or less.')
+    fileError.value = 'Cover image must be 2MB or less.'
     return
   }
 
@@ -317,6 +332,19 @@ function onSelectCoverFile(event: Event) {
   confirmingReset.value = false
   hasRecentReset.value = false
   urlError.value = ''
+  fileError.value = ''
+}
+
+function onDropFile(event: DragEvent) {
+  isDragging.value = false
+  const file = event.dataTransfer?.files?.[0] || null
+  handleFileSelection(file)
+}
+
+function onSelectCoverFile(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0] || null
+  handleFileSelection(file)
 }
 
 function setCoverMode(mode: 'auto' | 'file' | 'url') {
@@ -361,3 +389,12 @@ defineExpose({
   }
 })
 </script>
+
+<style scoped>
+.file-upload-btn-dragging {
+  border-color: var(--accent) !important;
+  background: rgba(184, 108, 255, 0.15) !important;
+  transform: scale(1.02);
+}
+</style>
+

@@ -6,8 +6,19 @@
         v-model="store.searchQuery"
         type="search"
         placeholder="Search dances, artists, or categories..."
+        aria-label="Search dances, artists, or categories"
         @input="onSearchInput"
       >
+      <button
+        v-if="store.searchQuery"
+        type="button"
+        class="clear-search-btn"
+        aria-label="Clear search query"
+        title="Clear search"
+        @click="clearSearch"
+      >
+        ✕
+      </button>
     </label>
 
     <div class="filter-dropdowns">
@@ -25,7 +36,7 @@
         v-model="store.statusFilter"
         class="filter-dropdown status-select"
         aria-label="Filter by status"
-        @change="onFilterChange"
+        @change="onStatusSelectChange"
       >
         <option value="All">All Statuses</option>
         <option
@@ -71,9 +82,20 @@ function onSearchInput() {
   }, 250)
 }
 
+function clearSearch() {
+  store.searchQuery = ''
+  if (searchTimer) window.clearTimeout(searchTimer)
+  void store.fetchDances(1, false)
+  emit('filterChanged')
+}
+
 function onFilterChange() {
   void store.fetchDances(1, false)
   emit('filterChanged')
+}
+
+function onStatusSelectChange() {
+  emit('statusSelected', store.statusFilter)
 }
 
 function onSelectStatus(filter: string) {
@@ -101,5 +123,17 @@ function onSelectStatus(filter: string) {
 
 .filter-dropdown:focus {
   border-color: rgba(184, 108, 255, 0.5);
+}
+
+@media (min-width: 820px) {
+  .status-select {
+    display: none;
+  }
+}
+
+@media (max-width: 819px) {
+  .filters {
+    display: none;
+  }
 }
 </style>
