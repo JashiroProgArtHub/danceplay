@@ -12,11 +12,15 @@
         <span class="eyebrow">{{ editingDance ? 'UPDATE YOUR ROUTINE' : 'ADD TO YOUR COLLECTION' }}</span>
         <h2>{{ editingDance ? 'Edit Dance' : 'Add a Dance' }}</h2>
         <p class="form-intro">
-          {{ editingDance ? 'Update practice milestones, video links, or choreography notes.' : 'Quickly save a choreography you want to practice, film, or track.' }}
+          {{ editingDance ? 'Update the dance details or add optional practice resources.' : 'Save the dance first, then add a reference video or notes whenever you are ready.' }}
         </p>
 
         <fieldset :disabled="store.mutationLoading" style="border: 0; padding: 0; margin: 0; min-width: 0;">
         <!-- SECTION 1: ESSENTIALS (QUICK ADD) -->
+        <div class="form-section-heading">
+          <strong>Dance details</strong>
+          <span>Required to add a dance</span>
+        </div>
         <div class="form-grid">
           <label>
             Dance Name *
@@ -27,14 +31,14 @@
             <input v-model.trim="form.artist" required placeholder="e.g. ILLIT">
           </label>
           <label>
-            Category
-            <select v-model="form.category">
+            Category *
+            <select v-model="form.category" required>
               <option v-for="cat in store.categories" :key="cat" :value="cat">{{ cat }}</option>
             </select>
           </label>
           <label>
-            Difficulty
-            <select v-model="form.difficulty">
+            Difficulty *
+            <select v-model="form.difficulty" required>
               <option>Easy</option>
               <option>Medium</option>
               <option>Hard</option>
@@ -55,6 +59,9 @@
           </button>
 
           <div v-show="detailsOpen" class="form-collapse-body">
+            <p class="optional-fields-hint">
+              All fields in this section are optional. Add a reference link now or attach one later.
+            </p>
             <!-- Interactive Milestone Presets & Progress -->
             <div class="milestone-selector-block q-mb-md">
               <div class="milestone-header">
@@ -151,9 +158,11 @@
                   v-model.trim="form.sourceLink"
                   type="url"
                   placeholder="https://www.youtube.com/watch?v=..."
+                  :aria-invalid="Boolean(sourceLinkError)"
                   @blur="onNormalizeLinks"
                 >
                 <small>YouTube links automatically enable the in-app practice player and auto-cover.</small>
+                <small v-if="sourceLinkError" class="field-error">{{ sourceLinkError }}</small>
               </label>
               <label class="full">
                 My Upload Link
@@ -161,9 +170,11 @@
                   v-model.trim="form.uploadLink"
                   type="url"
                   placeholder="https://www.tiktok.com/@dancer/video/..."
+                  :aria-invalid="Boolean(uploadLinkError)"
                   @blur="onNormalizeLinks"
                 >
                 <small>Attaching your cover performance link automatically marks the routine as Uploaded.</small>
+                <small v-if="uploadLinkError" class="field-error">{{ uploadLinkError }}</small>
               </label>
               <label class="full">
                 <div style="display: flex; justify-content: space-between; align-items: baseline;">
@@ -300,12 +311,16 @@ const form = ref<FormState>(emptyForm())
 const detailsOpen = ref(false)
 const showDiscardConfirm = ref(false)
 const showDeleteConfirm = ref(false)
+const sourceLinkError = ref('')
+const uploadLinkError = ref('')
 
 watch(
   () => props.show,
   (val) => {
     showDiscardConfirm.value = false
     showDeleteConfirm.value = false
+    sourceLinkError.value = ''
+    uploadLinkError.value = ''
     if (val) {
       if (props.editingDance) {
         form.value = {
@@ -446,10 +461,29 @@ function onNormalizeLinks() {
   if (form.value.uploadLink) {
     form.value.uploadLink = normalizeUrl(form.value.uploadLink)
   }
+  sourceLinkError.value = validateOptionalUrl(form.value.sourceLink)
+  uploadLinkError.value = validateOptionalUrl(form.value.uploadLink)
+}
+
+function validateOptionalUrl(url: string): string {
+  if (!url) return ''
+  try {
+    const parsedUrl = new URL(url)
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      return 'Use a web link beginning with http:// or https://.'
+    }
+    return ''
+  } catch {
+    return 'Enter a valid web link, or leave this field empty.'
+  }
 }
 
 async function onSave() {
   onNormalizeLinks()
+  if (sourceLinkError.value || uploadLinkError.value) {
+    detailsOpen.value = true
+    return
+  }
   try {
     await store.saveDance(form.value, form.value.coverFile)
     emit('saved')
@@ -458,3 +492,28 @@ async function onSave() {
   }
 }
 </script>
+
+<style scoped>
+.form-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 12px;
+  color: var(--text);
+}
+
+.form-section-heading span,
+.optional-fields-hint {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.optional-fields-hint {
+  margin: 0 0 16px;
+}
+
+.field-error {
+  color: #ff7b72;
+}
+</style>
