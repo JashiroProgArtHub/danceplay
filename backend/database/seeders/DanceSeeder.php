@@ -21,7 +21,10 @@ class DanceSeeder extends Seeder
         ];
 
         foreach ($dances as $dance) {
-            Dance::create($dance);
+            Dance::updateOrCreate(
+                ['title' => $dance['title'], 'artist' => $dance['artist']],
+                $dance
+            );
         }
     }
 }

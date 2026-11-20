@@ -1,7 +1,10 @@
 import axios from 'axios'
 
-const api = axios.create({
-  baseURL: '/api'
+// Development uses Vite's proxy. Production builds use the public API URL.
+const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, '')
+
+export const api = axios.create({
+  baseURL: apiUrl ? `${apiUrl}/api` : '/api'
 })
 
 export interface Dance {

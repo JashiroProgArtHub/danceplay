@@ -39,6 +39,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
+import { api } from '../../services/danceService'
 
 const message = ref('')
 const errorMessage = ref('')
@@ -50,7 +51,7 @@ async function testApi() {
   message.value = ''
 
   try {
-    const response = await axios.get<{ message: string }>('/api/hello')
+    const response = await api.get<{ message: string }>('/hello')
     message.value = response.data.message
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
