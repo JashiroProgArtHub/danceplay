@@ -2,14 +2,14 @@
   <section class="content-section q-mt-xl">
     <div class="section-heading">
       <div>
-        <span class="eyebrow">API INTEGRATION</span>
-        <h2>Backend Connection</h2>
+        <span class="eyebrow">CONNECTION STATUS</span>
+        <h2>Cloud sync</h2>
       </div>
     </div>
 
     <div class="backend-test-card">
       <p class="test-description">
-        Click the button below to test the connection between the Vue/Quasar frontend and Laravel API.
+        Your dances are synced with the DancePlay cloud. Use the test button whenever you want to verify the connection.
       </p>
 
       <div class="test-controls">
@@ -70,13 +70,14 @@ async function testApi() {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 24px;
+  padding: 20px;
+  max-width: 760px;
 }
 
 .test-description {
   color: var(--muted);
   font-size: 14px;
-  margin: 0 0 18px;
+  margin: 0 0 14px;
   line-height: 1.5;
 }
 
@@ -94,7 +95,7 @@ async function testApi() {
 }
 
 .result-box {
-  margin-top: 18px;
+  margin-top: 14px;
   padding: 14px 18px;
   border-radius: 10px;
   display: flex;

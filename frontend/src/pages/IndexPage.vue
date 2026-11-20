@@ -222,6 +222,7 @@
             <div class="empty-icon">!</div>
             <h2>Unable to load dances</h2>
             <p>{{ store.loadError }}</p>
+            <small>Check your internet connection, then try again.</small>
             <button class="primary-btn" @click="store.fetchDances(1)">Retry</button>
           </div>
 
